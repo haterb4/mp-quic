@@ -60,6 +60,26 @@ func DialAddr(addr string, tlsConf *tls.Config, config *Config) (Session, error)
 	return Dial(pconnMgr.pconnAny, udpAddr, addr, tlsConf, config, pconnMgr)
 }
 
+// DialAddrListenAddr establishes a new QUIC connection to a server.
+// The hostname for SNI is taken from the given address.
+func DialAddrListenAddr(addr string, listenAddr string, tlsConf *tls.Config, config *Config) (Session, error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		return nil, err
+	}
+	udpListenAddr, err := net.ResolveUDPAddr("udp", listenAddr)
+	if err != nil {
+		return nil, err
+	}
+	// Create the pconnManager here. It will be used to manage UDP connections
+	pconnMgr := &pconnManager{perspective: protocol.PerspectiveClient}
+	err = pconnMgr.setup(nil, udpListenAddr)
+	if err != nil {
+		return nil, err
+	}
+	return Dial(pconnMgr.pconnAny, udpAddr, addr, tlsConf, config, pconnMgr)
+}
+
 // DialAddrNonFWSecure establishes a new QUIC connection to a server.
 // The hostname for SNI is taken from the given address.
 func DialAddrNonFWSecure(
