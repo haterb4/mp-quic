@@ -38,7 +38,7 @@ func DeriveQuicCryptoAESKeys(forwardSecure bool, sharedSecret, nonces []byte, co
 		utils.Infof("-----------------------------> otherkey %v \n mykey %v \n otherIV %v \n myIV %v", otherKey, myKey, otherIV, myIV)
 		array := [][]byte{otherKey, myKey, otherIV, myIV}
 		//lines := bytetostring2(array)
-		if err := saveDerivedKeys(array, "/derivateK.in.json"); err != nil {
+		if err := saveDerivedKeys(array, "temp/derivateK.in.json"); err != nil {
 			log.Fatalf("writeLines: %s", err)
 			utils.Infof("Error for writter derivate key")
 		}
