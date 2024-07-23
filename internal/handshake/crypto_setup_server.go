@@ -487,6 +487,7 @@ func (h *cryptoSetupServer) SetDerivationKey(otherKey []byte, myKey []byte, othe
 		return crypto.NewAEADAESGCM12(otherKey, myKey, otherIV, myIV)
 	}
 }
+
 func (h *cryptoSetupServer) GetOncesObitID() ([]byte, []byte, []byte) {
 	return h.diversificationNonce, h.scfg.obit, h.scfg.ID
 }

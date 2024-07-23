@@ -74,6 +74,9 @@ type Session interface {
 	// OpenStreamSync opens a new QUIC stream, blocking until the peer's concurrent stream limit allows a new stream to be opened.
 	// It always picks the smallest possible stream ID.
 	OpenStreamSync() (Stream, error)
+	// UpdateStreamId updates the stream id of the session
+	// Added by haterb4
+	UpdateStreamId(id protocol.StreamID, newId protocol.StreamID) error
 	// LocalAddr returns the local address.
 	LocalAddr() net.Addr
 	// RemoteAddr returns the address of the peer.

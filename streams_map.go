@@ -331,3 +331,51 @@ func (m *streamsMap) CloseWithError(err error) {
 		m.streams[s].Cancel(err)
 	}
 }
+
+// Adding a function to update the stream id
+// Added by haterb4
+func (m *streamsMap) UpdateStreamID(oldID protocol.StreamID, newID protocol.StreamID) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	_, ok := m.streams[oldID]
+	if !ok {
+		return fmt.Errorf("attempted to update non-existing stream: %d", oldID)
+	}
+	_, ok = m.streams[newID]
+	if ok {
+		// stream with newID already exists
+		// change the stream id of the stream with newID to a next available stream id
+		if newID%2 == 0 {
+			m.streams[m.nextStream] = m.streams[newID]
+			m.nextStream += 2
+			//m.nextStreamToAccept += 1
+		} else {
+			m.streams[m.nextStreamToAccept] = m.streams[newID]
+			m.nextStreamToAccept += 1
+			// m.nextStream += 2
+		}
+		m.streams[newID] = m.streams[oldID]
+	} else {
+		// stream with newID does not exist
+		if newID%2 == 0 {
+			if newID < m.nextStream {
+				m.streams[newID] = m.streams[oldID]
+			} else {
+				m.streams[newID] = m.streams[oldID]
+				m.nextStream = newID + 2
+				//m.nextStreamToAccept += 1
+			}
+		} else {
+			if newID < m.nextStreamToAccept {
+				m.streams[newID] = m.streams[oldID]
+			} else {
+				m.streams[newID] = m.streams[oldID]
+				m.nextStreamToAccept = newID + 1
+				// m.nextStream += 2
+			}
+		}
+	}
+	m.streams[newID].streamID = newID
+	delete(m.streams, oldID)
+	return nil
+}

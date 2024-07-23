@@ -1012,6 +1012,9 @@ func (s *session) GetPaths() []*path {
 	}
 	return paths
 }
+
+// Here Add the function to create a new patth in the session between the client and the server
+// this new path allows the relays server to send data to the client without the need to create a new session
 func (s *session) CreationRelayPath(remoteaddr, locAddr string, pathID int) error {
 	err := s.pathManager.AddPaths(remoteaddr, locAddr, pathID)
 	return err
@@ -1079,4 +1082,11 @@ func (s *session) IncrementBytesInFlight(pthId int, bytesInFlight protocol.ByteC
 }
 func (s *session) GetAckPaquet() []AckStruct {
 	return s.AckPacket
+}
+
+// Adding functions to update a stream id in the session
+// Added by haterb4
+func (s *session) UpdateStreamId(id protocol.StreamID, newId protocol.StreamID) error {
+	err := s.streamsMap.UpdateStreamID(id, newId)
+	return err
 }
