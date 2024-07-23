@@ -281,6 +281,7 @@ func (pm *pathManager) closePaths() {
 	}
 	pm.sess.pathsLock.RUnlock()
 }
+
 func (pm *pathManager) AddPaths(remoteaddr, localAddr string, pthId int) error {
 	remote, _ := net.ResolveUDPAddr("udp", remoteaddr)
 
@@ -293,6 +294,7 @@ func (pm *pathManager) AddPaths(remoteaddr, localAddr string, pthId int) error {
 
 	return err
 }
+
 func (pm *pathManager) AdvertiseRelayAddresses(ipaddr string) {
 	pm.pconnMgr.mutex.Lock()
 	defer pm.pconnMgr.mutex.Unlock()

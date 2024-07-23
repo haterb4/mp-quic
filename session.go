@@ -1015,7 +1015,7 @@ func (s *session) GetPaths() []*path {
 
 // Here Add the function to create a new patth in the session between the client and the server
 // this new path allows the relays server to send data to the client without the need to create a new session
-func (s *session) CreationRelayPath(remoteaddr, locAddr string, pathID int) error {
+func (s *session) AddPath(remoteaddr, locAddr string, pathID int) error {
 	err := s.pathManager.AddPaths(remoteaddr, locAddr, pathID)
 	return err
 
