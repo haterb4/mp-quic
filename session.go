@@ -506,7 +506,11 @@ func (s *session) handlePacketImpl(p *receivedPacket) error {
 			return err
 		}
 	}
-	fmt.Println("Ack table", s.AckPacket)
+	// Added by haterb4 to update the session Ack
+	id := s.FindPacket(p.publicHeader.PacketNumber)
+	if id != -1 {
+		s.AckPacket[id].Ack = true
+	}
 	return pth.handlePacketImpl(p)
 }
 
@@ -664,6 +668,11 @@ func (s *session) handleAckFrame(frame *wire.AckFrame) error {
 	if err == nil && pth.rttStats.SmoothedRTT() > s.rttStats.SmoothedRTT() {
 		// Update the session RTT, which comes to take the max RTT on all paths
 		s.rttStats.UpdateSessionRTT(pth.rttStats.SmoothedRTT())
+		// Added by haterb4 to update the session Ack
+		index := s.FindPacket(frame.LargestAcked)
+		if index != -1 {
+			s.AckPacket[index].Ack = true
+		}
 	}
 	return err
 }
