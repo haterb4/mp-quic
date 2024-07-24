@@ -1096,8 +1096,15 @@ func (s *session) SetHandshakeComplete(handshake bool) {
 func (s *session) IncrementBytesInFlight(pthId int, bytesInFlight protocol.ByteCount) {
 	s.paths[protocol.PathID(pthId)].IncrementBytesInFlight(bytesInFlight)
 }
-func (s *session) GetAckPaquet() []AckStruct {
-	return s.AckPacket
+func (s *session) GetAckedPaquet() []AckStruct {
+	// Filter the Acked packet
+	var acked []AckStruct
+	for _, ack := range s.AckPacket {
+		if ack.Ack {
+			acked = append(acked, ack)
+		}
+	}
+	return acked
 }
 
 // Adding functions to update a stream id in the session
