@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	logLevel   = LogLevelNothing
+	logLevel   = LogLevelDebug
 	timeFormat = ""
 )
 
