@@ -506,6 +506,7 @@ func (s *session) handlePacketImpl(p *receivedPacket) error {
 			return err
 		}
 	}
+	fmt.Println("Ack table", s.AckPacket)
 	return pth.handlePacketImpl(p)
 }
 
