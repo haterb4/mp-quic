@@ -176,6 +176,12 @@ func (p *path) idleTimeout() time.Duration {
 	return time.Second
 }
 
+// handlePacketImpl handles a received packet on the path.
+// It unpacks the packet, updates the remote address, and handles the frames.
+// If the packet decryption fails, it returns an error.
+// If the packet unpacking fails for any reason other than decryption failure, it updates the remote address and returns an error.
+// It also updates the last received packet number and the largest received packet number.
+// Finally, it acknowledges the packet and handles the frames.
 func (p *path) handlePacketImpl(pkt *receivedPacket) error {
 	if !p.open.Get() {
 		// Path is closed, ignore packet
@@ -232,11 +238,12 @@ func (p *path) handlePacketImpl(pkt *receivedPacket) error {
 	if err != nil {
 		return err
 	}
+
 	for _, ff := range packet.frames {
 		if wire.GetTypeFrame(ff) == 2 {
-			indice := trouverIndice(p.sess.AckPacket, hdr.PacketNumber)
-			if indice != -1 {
-				p.sess.AckPacket[indice].Ack = true
+			id := p.sess.FindPacket(hdr.PacketNumber)
+			if id != -1 {
+				p.sess.AckPacket[id].Ack = true
 			}
 
 		}

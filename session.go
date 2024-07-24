@@ -508,14 +508,16 @@ func (s *session) handlePacketImpl(p *receivedPacket) error {
 	}
 	return pth.handlePacketImpl(p)
 }
-func trouverIndice(ack []AckStruct, paquetNumber protocol.PacketNumber) int {
-	for i := 0; i < len(ack); i++ {
-		if ack[i].PacketNumber == paquetNumber {
-			return i // Retourne l'indice si la personne avec le nom "Abdou" est trouvée
+
+func (s *session) FindPacket(pn protocol.PacketNumber) int {
+	for i := 0; i < len(s.AckPacket); i++ {
+		if s.AckPacket[i].PacketNumber == pn {
+			return i
 		}
 	}
-	return -1 // Retourne -1 si la personne avec le nom "Abdou" n'est pas trouvée
+	return -1
 }
+
 func (s *session) handleFrames(fs []wire.Frame, p *path) error {
 	for _, ff := range fs {
 		var err error
@@ -814,6 +816,7 @@ func (s *session) sendPackedPacket(packet *packedPacket, pth *path) error {
 	}
 	pth.sentPacket <- struct{}{}
 
+	s.addAckPackets(packet, pth.pathID)
 	s.logPacket(packet, pth.pathID)
 	return pth.conn.Write(packet.raw)
 }
@@ -827,7 +830,9 @@ func (s *session) sendConnectionClose(quicErr *qerr.QuicError) error {
 	if err != nil {
 		return err
 	}
+	s.addAckPackets(packet, protocol.InitialPathID)
 	s.logPacket(packet, protocol.InitialPathID)
+
 	// XXX (QDC): seems reasonable to send on pathID 0, but this can change
 	return s.paths[protocol.InitialPathID].conn.Write(packet.raw)
 }
@@ -849,7 +854,9 @@ func (s *session) logPacket(packet *packedPacket, pathID protocol.PathID) {
 		return
 	}
 	utils.Debugf("-> Sending packet 0x%x (%d bytes) for connection %x on path %x, %s", packet.number, len(packet.raw), s.connectionID, pathID, packet.encryptionLevel)
+}
 
+func (s *session) addAckPackets(packet *packedPacket, pathID protocol.PathID) {
 	var ack AckStruct
 
 	for _, frame := range packet.frames {
@@ -864,7 +871,6 @@ func (s *session) logPacket(packet *packedPacket, pathID protocol.PathID) {
 		//s.numberOffetAck[*wire.ReturnOffsetFrame(frame)] = false
 	}
 	s.AckPacket = append(s.AckPacket, ack)
-
 }
 
 // GetOrOpenStream either returns an existing stream, a newly opened stream, or nil if a stream with the provided ID is already closed.
