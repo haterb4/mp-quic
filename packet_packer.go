@@ -88,7 +88,7 @@ func (p *packetPacker) PackAckPacket(pth *path) (*packedPacket, error) {
 	}
 	p.ackFrame[pth.pathID] = nil
 	raw, err := p.writeAndSealPacket(ph, frames, sealer, pth)
-	fmt.Println("MP-QUIC: PACK ACK PACKET for path:", pth.pathID, "with packet number:", ph.PacketNumber)
+	// fmt.Println("MP-QUIC: PACK ACK PACKET for path:", pth.pathID, "with packet number:", ph.PacketNumber)
 	return &packedPacket{
 		number:          ph.PacketNumber,
 		raw:             raw,

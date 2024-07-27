@@ -506,7 +506,7 @@ func (s *session) handlePacketImpl(p *receivedPacket) error {
 			return err
 		}
 		//debug
-		fmt.Println("MP-QUIC: New path created from remote:", s.RemoteAddr().String(), "with pathID", pth.pathID)
+		// fmt.Println("MP-QUIC: New path created from remote:", s.RemoteAddr().String(), "with pathID", pth.pathID)
 	}
 	return pth.handlePacketImpl(p)
 }

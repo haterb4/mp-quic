@@ -1,7 +1,6 @@
 package quic
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/haterb4/mp-quic/ackhandler"
@@ -217,7 +216,7 @@ func (p *path) handlePacketImpl(pkt *receivedPacket) error {
 	// if the decryption failed, this might be a packet sent by an attacker
 	// don't update the remote address
 	if quicErr, ok := err.(*qerr.QuicError); ok && quicErr.ErrorCode == qerr.DecryptionFailure {
-		fmt.Println("Decryption Failure")
+		// fmt.Println("Decryption Failure")
 		return err
 	}
 
