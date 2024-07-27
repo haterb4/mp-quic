@@ -520,7 +520,7 @@ func (s *session) FindPacket(pn protocol.PacketNumber) int {
 	return -1
 }
 
-func (s *session) FindPackets(pn protocol.PacketNumber) []int {
+func (s *session) FindAckPackets(pn protocol.PacketNumber) []int {
 	acks := []int{}
 	for i := 0; i < len(s.AckPacket); i++ {
 		if s.AckPacket[i].PacketNumber == pn {
@@ -881,8 +881,8 @@ func (s *session) addAckPackets(packet *packedPacket, pathID protocol.PathID) {
 		}
 		wire.LogFrame(frame, true)
 		//s.numberOffetAck[*wire.ReturnOffsetFrame(frame)] = false
-		s.AckPacket = append(s.AckPacket, ack)
 	}
+	s.AckPacket = append(s.AckPacket, ack)
 }
 
 // GetOrOpenStream either returns an existing stream, a newly opened stream, or nil if a stream with the provided ID is already closed.
