@@ -520,6 +520,16 @@ func (s *session) FindPacket(pn protocol.PacketNumber) int {
 	return -1
 }
 
+func (s *session) FindPackets(pn protocol.PacketNumber) []int {
+	acks := []int{}
+	for i := 0; i < len(s.AckPacket); i++ {
+		if s.AckPacket[i].PacketNumber == pn {
+			acks = append(acks, i)
+		}
+	}
+	return acks
+}
+
 func (s *session) handleFrames(fs []wire.Frame, p *path) error {
 	for _, ff := range fs {
 		var err error
@@ -871,8 +881,8 @@ func (s *session) addAckPackets(packet *packedPacket, pathID protocol.PathID) {
 		}
 		wire.LogFrame(frame, true)
 		//s.numberOffetAck[*wire.ReturnOffsetFrame(frame)] = false
+		s.AckPacket = append(s.AckPacket, ack)
 	}
-	s.AckPacket = append(s.AckPacket, ack)
 }
 
 // GetOrOpenStream either returns an existing stream, a newly opened stream, or nil if a stream with the provided ID is already closed.
@@ -1088,7 +1098,8 @@ func (s *session) SetHandshakeComplete(handshake bool) {
 func (s *session) IncrementBytesInFlight(pthId int, bytesInFlight protocol.ByteCount) {
 	s.paths[protocol.PathID(pthId)].IncrementBytesInFlight(bytesInFlight)
 }
-func (s *session) GetAckedPaquet() []AckStruct {
+
+func (s *session) GetAckedPaquets() []AckStruct {
 	// Filter the Acked packet
 	var acked []AckStruct
 	for _, ack := range s.AckPacket {
@@ -1097,6 +1108,11 @@ func (s *session) GetAckedPaquet() []AckStruct {
 		}
 	}
 	return acked
+}
+
+func (s *session) GetAckPaquets() []AckStruct {
+	// Filter the Acked packet
+	return s.AckPacket
 }
 
 // Adding functions to update a stream id in the session
