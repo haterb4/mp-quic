@@ -285,6 +285,8 @@ func (f *flowControlManager) getFlowController(streamID protocol.StreamID) (*flo
 	}
 	return streamFlowController, nil
 }
+
+// added by AbdoulCeik
 func (f *flowControlManager) IncrementReceiveWindow(streamID protocol.StreamID, incremente protocol.ByteCount) {
 	f.streamFlowController[streamID].IncrementReceiveWindow(incremente)
 }

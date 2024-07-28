@@ -929,6 +929,7 @@ func (s *session) newStream(id protocol.StreamID) *stream {
 	} else {
 		s.flowControlManager.NewStream(id, true)
 	}
+
 	return newStream(id, s.scheduleSending, s.queueResetStreamFrame, s.flowControlManager)
 }
 

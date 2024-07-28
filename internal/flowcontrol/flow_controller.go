@@ -218,6 +218,8 @@ func (c *flowController) EnsureMinimumWindowIncrement(inc protocol.ByteCount) {
 func (c *flowController) CheckFlowControlViolation() bool {
 	return c.highestReceived > c.receiveWindow
 }
+
+// added by AbdoulCeik
 func (c *flowController) IncrementReceiveWindow(increment protocol.ByteCount) {
 	c.receiveWindow += increment
 }

@@ -188,6 +188,7 @@ func (s *stream) Read(p []byte) (int, error) {
 			s.flowControlManager.AddBytesRead(s.streamID, protocol.ByteCount(m))
 		}
 		s.onData() // so that a possible WINDOW_UPDATE is sent
+		s.onDataCallback()
 		utils.Infof(" :)      13 \n")
 		if s.readPosInFrame >= int(frame.DataLen()) {
 			utils.Infof(" :)      14 \n")
@@ -483,6 +484,26 @@ func (s *stream) SetReadOffset(readOffset uint64) {
 func (s *stream) Setuint64(writeOffset uint64) {
 	s.writeOffset = protocol.ByteCount(writeOffset)
 }
+
+// Updated by haterb4
 func (s *stream) IncrementReceiveWindow(increment protocol.ByteCount) {
 	s.flowControlManager.IncrementReceiveWindow(s.streamID, increment)
+	s.signalWrite() // Notify that the window size has been increased
+}
+
+// added by haterb4
+func (s *stream) onDataCallback() {
+	// Calculate how much data has been received and how much window space is left
+	receivedData := s.readOffset
+	windowSize, err := s.flowControlManager.GetReceiveWindow(s.streamID)
+	if err != nil {
+		utils.Infof("Error getting receive window: %v", err)
+		return
+	}
+
+	// If the window is almost full, increase the window size
+	if receivedData >= protocol.ByteCount(int(float64(windowSize)*0.9)) {
+		increment := protocol.ByteCount(10 * 1024 * 1024) // Increase by 10 MB
+		s.IncrementReceiveWindow(increment)
+	}
 }
