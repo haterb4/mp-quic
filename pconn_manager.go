@@ -244,3 +244,7 @@ func (pcm *pconnManager) closePconns() {
 	pcm.pconnAny.Close()
 	close(pcm.closed)
 }
+
+func (pcm *pconnManager) GetPconnAny() net.PacketConn {
+	return pcm.pconnAny
+}

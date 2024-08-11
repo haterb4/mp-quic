@@ -237,6 +237,48 @@ func (s *server) Accept() (Session, error) {
 	}
 }
 
+func (s *server) Clone(connID protocol.ConnectionID, remoteAddr net.Addr, version protocol.VersionNumber) (Session, error) {
+	conn := &conn{pconn: s.pconnMgr.GetPconnAny(), currentAddr: remoteAddr}
+	session, handshakeChan, err := s.newSession(
+		conn,
+		s.pconnMgr,
+		s.config.CreatePaths,
+		version,
+		connID,
+		s.scfg,
+		s.tlsConf,
+		s.config,
+	)
+	if err != nil {
+		var sess Session
+		return sess, err
+	}
+	s.sessionsMutex.Lock()
+	s.sessions[connID] = session
+	s.sessionsMutex.Unlock()
+
+	go func() {
+		// session.run() returns as soon as the session is closed
+		_ = session.run()
+		s.removeConnection(connID)
+	}()
+	s.removeConnection(connID)
+	go func() {
+		for {
+			ev := <-handshakeChan
+			if ev.err != nil {
+				return
+			}
+			if ev.encLevel == protocol.EncryptionForwardSecure {
+				break
+			}
+		}
+		s.sessionQueue <- session
+	}()
+
+	return s.Accept()
+}
+
 // Close the server
 func (s *server) Close() error {
 	s.sessionsMutex.Lock()
