@@ -239,7 +239,7 @@ func (s *server) Accept() (Session, error) {
 
 func (s *server) Clone(connID protocol.ConnectionID, remoteAddr net.Addr, version protocol.VersionNumber) (Session, error) {
 	conn := &conn{pconn: s.pconnMgr.GetPconnAny(), currentAddr: remoteAddr}
-	session, handshakeChan, err := s.newSession(
+	session, _, err := s.newSession(
 		conn,
 		s.pconnMgr,
 		s.config.CreatePaths,
@@ -263,20 +263,7 @@ func (s *server) Clone(connID protocol.ConnectionID, remoteAddr net.Addr, versio
 		s.removeConnection(connID)
 	}()
 	s.removeConnection(connID)
-	go func() {
-		for {
-			ev := <-handshakeChan
-			if ev.err != nil {
-				return
-			}
-			if ev.encLevel == protocol.EncryptionForwardSecure {
-				break
-			}
-		}
-		s.sessionQueue <- session
-	}()
-
-	return s.Accept()
+	return session, nil
 }
 
 // Close the server
