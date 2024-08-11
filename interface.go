@@ -170,6 +170,7 @@ type Listener interface {
 	// Close the server, sending CONNECTION_CLOSE frames to each peer.
 	Close() error
 	// Addr returns the local network addr that the server is listening on.
+	Clone(connID protocol.ConnectionID, remoteAddr net.Addr, version protocol.VersionNumber) (Session, error)
 	Addr() net.Addr
 	// Accept returns new sessions. It should be called in a loop.
 	Accept() (Session, error)
