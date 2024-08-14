@@ -1104,6 +1104,7 @@ func (s *session) GetAckedPaquets() []AckStruct {
 	// Filter the Acked packet
 	var acked []AckStruct
 	for _, ack := range s.AckPacket {
+		fmt.Println("Acked packet", ack.PacketNumber, ack)
 		if ack.Ack {
 			acked = append(acked, ack)
 		}
