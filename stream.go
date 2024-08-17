@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -324,18 +325,18 @@ func (s *stream) AddStreamFrame(frame *wire.StreamFrame) error {
 		utils.Infof(" (AddStreamFrame)      3 error  UpdateHighestReceived \n")
 		return err
 	}
-	utils.Infof(" (AddStreamFrame)      4 :\n")
+	utils.Infof(" (AddStreamFrame)      4 Pushing Frame:\n")
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	err = s.frameQueue.Push(frame)
 
-	utils.Infof(" (AddStreamFrame)     4.1 Error Push :%+v\n", err)
 	if err != nil && err != errDuplicateStreamData {
-		utils.Infof(" (AddStreamFrame)      5 error push : %+v\n", err)
+		utils.Infof(" (AddStreamFrame)     4.1 Error Push :%+v\n", err)
 		return err
 	}
-	utils.Infof(" (AddStreamFrame)      6 fin de la fonction\n")
+	utils.Infof(" (AddStreamFrame)      5 error push : %+v\n", err)
 	s.signalRead()
+	utils.Infof(" (AddStreamFrame)      6 fin de la fonction\n")
 	return nil
 }
 
@@ -486,9 +487,10 @@ func (s *stream) Setuint64(writeOffset uint64) {
 }
 
 // Updated by haterb4
-func (s *stream) IncrementReceiveWindow(increment protocol.ByteCount) {
-	s.flowControlManager.IncrementReceiveWindow(s.streamID, increment)
+func (s *stream) IncrementReceiveWindow(increment uint64) {
+	s.flowControlManager.IncrementReceiveWindow(s.streamID, protocol.ByteCount(increment))
 	s.signalWrite() // Notify that the window size has been increased
+	s.signalRead()
 }
 
 // added by haterb4
@@ -503,7 +505,9 @@ func (s *stream) onDataCallback() {
 
 	// If the window is almost full, increase the window size
 	if receivedData >= protocol.ByteCount(int(float64(windowSize)*0.9)) {
-		increment := protocol.ByteCount(10 * 1024 * 1024) // Increase by 10 MB
-		s.IncrementReceiveWindow(increment)
+		log.Println("Increasing window size from", windowSize, "to", windowSize*2, "as it is almost full", receivedData)
+		s.IncrementReceiveWindow(uint64(windowSize))
+		s.signalRead()
+		s.signalWrite()
 	}
 }
