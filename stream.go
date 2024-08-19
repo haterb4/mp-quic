@@ -506,6 +506,7 @@ func (s *stream) onDataCallback() {
 	// If the window is almost full, increase the window size
 	if receivedData >= protocol.ByteCount(int(float64(windowSize)*0.9)) {
 		log.Println("Increasing window size from", windowSize, "to", windowSize*2, "as it is almost full", receivedData)
+		windowSize *= 2
 		s.IncrementReceiveWindow(uint64(windowSize))
 		s.signalRead()
 		s.signalWrite()
