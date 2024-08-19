@@ -662,7 +662,7 @@ func (s *session) handleAckFrame(frame *wire.AckFrame) error {
 	for i := 0; i < len(s.ackPacket); i++ {
 		if s.ackPacket[i].packetNumber == pth.lastRcvdPacketNumber {
 			s.ackPacket[i].acked = true
-			log.Println("ACKED", s.ackPacket[i].packetNumber)
+			log.Println("ACKED", s.ackPacket[i].offset)
 		}
 	}
 	if len(s.ackPacket) > 100 && s.ackPacket[100].acked {
