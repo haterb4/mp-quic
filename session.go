@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -50,10 +51,10 @@ type closeError struct {
 	err    error
 	remote bool
 }
-type AckStruct struct {
-	Offset       protocol.ByteCount
-	PacketNumber protocol.PacketNumber
-	Ack          bool
+type ackStruct struct {
+	offset       protocol.ByteCount
+	packetNumber protocol.PacketNumber
+	acked        bool
 }
 
 // A Session is a QUIC session
@@ -129,7 +130,7 @@ type session struct {
 	pathManagerLaunched bool
 
 	scheduler *scheduler
-	AckPacket []AckStruct
+	ackPacket []ackStruct
 }
 
 var _ Session = &session{}
@@ -511,25 +512,6 @@ func (s *session) handlePacketImpl(p *receivedPacket) error {
 	return pth.handlePacketImpl(p)
 }
 
-func (s *session) FindPacket(pn protocol.PacketNumber) int {
-	for i := 0; i < len(s.AckPacket); i++ {
-		if s.AckPacket[i].PacketNumber == pn {
-			return i
-		}
-	}
-	return -1
-}
-
-func (s *session) FindAckPackets(pn protocol.PacketNumber) []int {
-	acks := []int{}
-	for i := 0; i < len(s.AckPacket); i++ {
-		if s.AckPacket[i].PacketNumber == pn {
-			acks = append(acks, i)
-		}
-	}
-	return acks
-}
-
 func (s *session) handleFrames(fs []wire.Frame, p *path) error {
 	for _, ff := range fs {
 		var err error
@@ -676,6 +658,17 @@ func (s *session) handleAckFrame(frame *wire.AckFrame) error {
 		// Update the session RTT, which comes to take the max RTT on all paths
 		s.rttStats.UpdateSessionRTT(pth.rttStats.SmoothedRTT())
 	}
+
+	for i := 0; i < len(s.ackPacket); i++ {
+		if s.ackPacket[i].packetNumber == pth.lastRcvdPacketNumber {
+			s.ackPacket[i].acked = true
+			log.Println("ACKED", s.ackPacket[i].packetNumber)
+		}
+	}
+	if len(s.ackPacket) > 100 && s.ackPacket[100].acked {
+		s.ackPacket = s.ackPacket[100:]
+	}
+
 	return err
 }
 
@@ -869,20 +862,17 @@ func (s *session) logPacket(packet *packedPacket, pathID protocol.PathID) {
 }
 
 func (s *session) addAckPackets(packet *packedPacket, pathID protocol.PathID) {
-	var ack AckStruct
 
 	for _, frame := range packet.frames {
 		if wire.GetTypeFrame(frame) == 1 {
-			ack = AckStruct{
-				PacketNumber: packet.number,
-				Offset:       *wire.ReturnOffsetFrame(frame),
-				Ack:          false,
-			}
+			s.ackPacket = append(s.ackPacket, ackStruct{
+				packetNumber: packet.number,
+				offset:       *wire.ReturnOffsetFrame(frame),
+				acked:        false,
+			})
 		}
 		wire.LogFrame(frame, true)
-		//s.numberOffetAck[*wire.ReturnOffsetFrame(frame)] = false
 	}
-	s.AckPacket = append(s.AckPacket, ack)
 }
 
 // GetOrOpenStream either returns an existing stream, a newly opened stream, or nil if a stream with the provided ID is already closed.
@@ -1100,21 +1090,13 @@ func (s *session) IncrementBytesInFlight(pthId int, bytesInFlight protocol.ByteC
 	s.paths[protocol.PathID(pthId)].IncrementBytesInFlight(bytesInFlight)
 }
 
-func (s *session) GetAckedPaquets() []AckStruct {
-	// Filter the Acked packet
-	var acked []AckStruct
-	for _, ack := range s.AckPacket {
-		fmt.Println("Acked packet", ack.PacketNumber, ack)
-		if ack.Ack {
-			acked = append(acked, ack)
+func (s *session) IsOffsetAcked(offset uint32) bool {
+	for i := 0; i < len(s.ackPacket); i++ {
+		if s.ackPacket[i].offset == protocol.ByteCount(offset) && s.ackPacket[i].acked {
+			return true
 		}
 	}
-	return acked
-}
-
-func (s *session) GetAckPaquets() []AckStruct {
-	// Filter the Acked packet
-	return s.AckPacket
+	return false
 }
 
 // Adding functions to update a stream id in the session

@@ -241,14 +241,6 @@ func (p *path) handlePacketImpl(pkt *receivedPacket) error {
 		return err
 	}
 
-	for _, ff := range packet.frames {
-		if wire.GetTypeFrame(ff) == 2 {
-			ids := p.sess.FindAckPackets(hdr.PacketNumber)
-			for _, id := range ids {
-				p.sess.AckPacket[id].Ack = true
-			}
-		}
-	}
 	return p.sess.handleFrames(packet.frames, p)
 }
 
