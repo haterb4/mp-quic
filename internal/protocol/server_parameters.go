@@ -28,7 +28,7 @@ const PublicResetTimeout = 500 * time.Millisecond
 
 // AckSendDelay is the maximum delay that can be applied to an ACK for a retransmittable packet
 // This is the value Chromium is using
-const AckSendDelay = 5 * time.Millisecond
+const AckSendDelay = 10 * time.Millisecond
 
 // ReceiveStreamFlowControlWindow is the stream-level flow control window for receiving data
 // This is the value that Google servers are using
@@ -93,7 +93,7 @@ const MaxTrackedSentPackets = 2 * DefaultMaxCongestionWindow
 const MaxTrackedReceivedAckRanges = DefaultMaxCongestionWindow
 
 // MaxPacketsReceivedBeforeAckSend is the number of packets that can be received before an ACK frame is sent
-const MaxPacketsReceivedBeforeAckSend = 10
+const MaxPacketsReceivedBeforeAckSend = 15
 
 // MaxNonRetransmittablePackets is the maximum number of non-retransmittable packets that we send in a row
 const MaxNonRetransmittablePackets = 19
