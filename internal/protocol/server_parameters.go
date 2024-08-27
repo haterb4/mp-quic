@@ -104,7 +104,7 @@ const RetransmittablePacketsBeforeAck = 2
 // MaxStreamFrameSorterGaps is the maximum number of gaps between received StreamFrames
 // prevents DoS attacks against the streamFrameSorter
 // XXX (QDC): needs to be compliant with the maximal congestion window
-const MaxStreamFrameSorterGaps = 2500
+const MaxStreamFrameSorterGaps = 1024 * 1024
 
 // CryptoMaxParams is the upper limit for the number of parameters in a crypto message.
 // Value taken from Chrome.

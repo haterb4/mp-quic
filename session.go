@@ -660,6 +660,7 @@ func (s *session) handleAckFrame(frame *wire.AckFrame) error {
 
 	for i := 0; i < len(s.ackPacket); i++ {
 		if s.ackPacket[i].packetNumber == pth.lastRcvdPacketNumber {
+			//TODO: check if the offset is the is alrady aked
 			s.ackPacket[i].acked = true
 		}
 	}
@@ -811,6 +812,9 @@ func (s *session) sendPackedPacket(packet *packedPacket, pth *path) error {
 		Length:          protocol.ByteCount(len(packet.raw)),
 		EncryptionLevel: packet.encryptionLevel,
 	})
+	if err == ackhandler.ErrTooManyTrackedSentPackets {
+
+	}
 	if err != nil {
 		return err
 	}
@@ -1094,9 +1098,6 @@ func (s *session) IsOffsetAcked(offset uint32) bool {
 	return false
 }
 
-// Adding functions to update a stream id in the session
-// Added by haterb4
-func (s *session) UpdateStreamId(id protocol.StreamID, newId protocol.StreamID) error {
-	err := s.streamsMap.UpdateStreamID(id, newId)
-	return err
+func (s *session) GetAckedFrames() []ackStruct {
+	return s.ackPacket
 }

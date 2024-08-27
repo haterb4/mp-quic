@@ -318,6 +318,7 @@ func (s *stream) sentFin() {
 // AddStreamFrame adds a new stream frame
 func (s *stream) AddStreamFrame(frame *wire.StreamFrame) error {
 	utils.Infof(" (AddStreamFrame)      1 : %+v \n", frame)
+	log.Println("Adding Stream Frame with offset", frame.Offset, "and data length", frame.DataLen())
 	maxOffset := frame.Offset + frame.DataLen()
 	err := s.flowControlManager.UpdateHighestReceived(s.streamID, maxOffset)
 	utils.Infof(" (AddStreamFrame)      2 : %+v\n", maxOffset)
@@ -331,12 +332,11 @@ func (s *stream) AddStreamFrame(frame *wire.StreamFrame) error {
 	err = s.frameQueue.Push(frame)
 
 	if err != nil && err != errDuplicateStreamData {
-		utils.Infof(" (AddStreamFrame)     4.1 Error Push :%+v\n", err)
+		utils.Infof(" (AddStreamFrame)     5 Error While Pushing Frame :%+v\n", err)
 		return err
 	}
-	utils.Infof(" (AddStreamFrame)      5 error push : %+v\n", err)
+	utils.Infof(" (AddStreamFrame)      5 Frame Pushed \n")
 	s.signalRead()
-	utils.Infof(" (AddStreamFrame)      6 fin de la fonction\n")
 	return nil
 }
 

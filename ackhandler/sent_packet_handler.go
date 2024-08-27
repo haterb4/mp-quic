@@ -133,6 +133,7 @@ func (h *sentPacketHandler) SentPacket(packet *Packet) error {
 	}
 
 	if protocol.PacketNumber(len(h.retransmissionQueue)+h.packetHistory.Len()+1) > protocol.MaxTrackedSentPackets {
+		fmt.Println("Too many outstanding non-acked and non-retransmitted packets")
 		return ErrTooManyTrackedSentPackets
 	}
 

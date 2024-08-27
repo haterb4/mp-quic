@@ -76,7 +76,7 @@ type Session interface {
 	OpenStreamSync() (Stream, error)
 	// UpdateStreamId updates the stream id of the session
 	// Added by haterb4
-	UpdateStreamId(id protocol.StreamID, newId protocol.StreamID) error
+	GetAckedFrames() []ackStruct
 	// LocalAddr returns the local address.
 	LocalAddr() net.Addr
 	// RemoteAddr returns the address of the peer.
