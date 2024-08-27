@@ -208,6 +208,91 @@ func (s *stream) Read(p []byte) (int, error) {
 	return bytesRead, nil
 }
 
+func (s *stream) ReadAvailable(p []byte) (int, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.cancelled.Get() || s.resetLocally.Get() {
+		return 0, s.err
+	}
+	if s.finishedReading.Get() {
+		return 0, io.EOF
+	}
+
+	bytesRead := 0
+	for bytesRead < len(p) {
+		frame := s.findAvailableFrame()
+		if frame == nil {
+			if bytesRead > 0 {
+				return bytesRead, nil
+			}
+			if err := s.waitForData(); err != nil {
+				return 0, err
+			}
+			continue
+		}
+
+		// Calculer combien de bytes nous pouvons lire de ce frame
+		frameOffset := int(frame.Offset)
+		readStart := utils.Max(int(s.readOffset-protocol.ByteCount(frameOffset)), 0)
+		readEnd := utils.Min(int(protocol.ByteCount(len(frame.Data))), int(protocol.ByteCount(len(p)-bytesRead)+s.readOffset-protocol.ByteCount(frameOffset)))
+		bytesToRead := int(readEnd - readStart)
+
+		copy(p[bytesRead:], frame.Data[readStart:readEnd])
+		bytesRead += bytesToRead
+		s.readOffset += protocol.ByteCount(bytesToRead)
+
+		if !s.resetRemotely.Get() {
+			s.flowControlManager.AddBytesRead(s.streamID, protocol.ByteCount(bytesToRead))
+		}
+		s.onData()
+		s.onDataCallback()
+
+		if readEnd == int(protocol.ByteCount(len(frame.Data))) && frame.FinBit {
+			s.finishedReading.Set(true)
+			return bytesRead, io.EOF
+		}
+	}
+
+	return bytesRead, nil
+}
+
+func (s *stream) findAvailableFrame() *wire.StreamFrame {
+	for _, frame := range s.frameQueue.queuedFrames {
+		if uint64(frame.Offset) <= uint64(s.readOffset) && uint64(frame.Offset)+uint64(len(frame.Data)) > uint64(s.readOffset) {
+			return frame
+		}
+	}
+	return nil
+}
+
+func (s *stream) waitForData() error {
+	for {
+		if s.cancelled.Get() || s.resetLocally.Get() {
+			return s.err
+		}
+
+		deadline := s.readDeadline
+		if !deadline.IsZero() && !time.Now().Before(deadline) {
+			return errDeadline
+		}
+
+		s.mutex.Unlock()
+		var timeout <-chan time.Time
+		if !deadline.IsZero() {
+			timeout = time.After(deadline.Sub(time.Now()))
+		}
+		select {
+		case <-s.readChan:
+			s.mutex.Lock()
+			return nil
+		case <-timeout:
+			s.mutex.Lock()
+			return errDeadline
+		}
+	}
+}
+
 func (s *stream) Write(p []byte) (int, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
